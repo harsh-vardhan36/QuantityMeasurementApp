@@ -6,30 +6,27 @@ public class QuantityMeasurementApp {
 		return l1.equals(l2);
 	}
 
-	public static void demonstrateFeetEquality() {
-		Length l1 = new Length(1.0, Length.LengthUnit.FEET);
-		Length l2 = new Length(1.0, Length.LengthUnit.FEET);
+	public static boolean demonstrateLengthComparison(double value1, Length.LengthUnit unit1, double value2,Length.LengthUnit unit2) {
 
-		System.out.println("feet equal : " + l1.equals(l2));
-	}
+		Length l1 = new Length(value1, unit1);
+		Length l2 = new Length(value2, unit2);
 
-	public static void demonstrateInchesEquality() {
-		Length l1 = new Length(1.0, Length.LengthUnit.INCHES);
-		Length l2 = new Length(1.0, Length.LengthUnit.INCHES);
+		boolean result = l1.equals(l2);
 
-		System.out.println("inches equal : " + l1.equals(l2));
-	}
-
-	public static void demonstrateFeetInchesComparison() {
-		Length l1 = new Length(1.0, Length.LengthUnit.FEET);
-		Length l2 = new Length(12.0, Length.LengthUnit.INCHES);
-
-		System.out.println("feet == inches : " + l1.equals(l2));
+		System.out.println("lengths are equal : " + result);
+		return result;
 	}
 
 	public static void main(String[] args) {
-		demonstrateFeetEquality();
-		demonstrateInchesEquality();
-		demonstrateFeetInchesComparison();
+			//github.com/harsh-vardhan36
+		demonstrateLengthComparison(1.0, Length.LengthUnit.FEET, 12.0, Length.LengthUnit.INCHES);
+
+		demonstrateLengthComparison(1.0, Length.LengthUnit.YARDS, 3.0, Length.LengthUnit.FEET);
+
+		demonstrateLengthComparison(1.0, Length.LengthUnit.YARDS, 36.0, Length.LengthUnit.INCHES);
+
+		demonstrateLengthComparison(1.0, Length.LengthUnit.CENTIMETERS, 0.393701, Length.LengthUnit.INCHES);
+
+		demonstrateLengthComparison(2.0, Length.LengthUnit.YARDS, 6.0, Length.LengthUnit.FEET);
 	}
 }
