@@ -9,16 +9,15 @@ public class Length {
 
 	public enum LengthUnit {
 
-		FEET(1.0), INCHES(1.0 / 12.0), YARDS(3.0), CENTIMETERS(0.393701 / 12.0);
+		FEET(12.0), INCHES(1.0), YARDS(36.0), CENTIMETERS(0.393701);
+		private final double conversionFactor;
 
-		private final double toFeetFactor;
-
-		LengthUnit(double toFeetFactor) {
-			this.toFeetFactor = toFeetFactor;
+		LengthUnit(double conversionFactor) {
+			this.conversionFactor = conversionFactor;
 		}
 
-		public double toFeet(double value) {
-			return value * toFeetFactor;
+		public double getConversionFactor() {
+			return conversionFactor;
 		}
 	}
 
@@ -33,27 +32,64 @@ public class Length {
 		this.unit = unit;
 	}
 
-	private double toBaseUnit() {
-		return unit.toFeet(value);
+	private double convertToBaseUnit() {
+		double valueInInches = value * unit.getConversionFactor();
+		return Math.round(valueInInches * 100.0) / 100.0;
+	}
+
+	private boolean compare(Length thatLength) {
+		return Double.compare(this.convertToBaseUnit(), thatLength.convertToBaseUnit()) == 0;
+	}
+
+	public Length convertTo(LengthUnit targetUnit) {
+		if (targetUnit == null) {
+			throw new IllegalArgumentException("Target unit must not be null");
+		}
+
+		double valueInInches = this.convertToBaseUnit();
+		double convertedValue = valueInInches / targetUnit.getConversionFactor();
+		double roundedValue = Math.round(convertedValue * 100.0) / 100.0;
+
+		return new Length(roundedValue, targetUnit);
+	}
+
+	public static double convert(double value, LengthUnit source, LengthUnit target) {
+
+		if (!Double.isFinite(value)) {
+			throw new IllegalArgumentException("Value must be a finite number");
+		}
+
+		if (source == null || target == null) {
+			throw new IllegalArgumentException("Source and target units must not be null");
+		}
+
+		double valueInInches = value * source.getConversionFactor();
+		double result = valueInInches / target.getConversionFactor();
+
+		return Math.round(result * 100.0) / 100.0;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(Object o) {
 
-		if (this == obj)
+		if (this == o)
 			return true;
-		if (obj == null)
+		if (o == null)
 			return false;
-		if (getClass() != obj.getClass())
+		if (getClass() != o.getClass())
 			return false;
 
-		Length other = (Length) obj;
-
-		return Double.compare(this.toBaseUnit(), other.toBaseUnit()) == 0;
+		Length other = (Length) o;
+		return compare(other);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(toBaseUnit());
+		return Objects.hash(convertToBaseUnit());
+	}
+
+	@Override
+	public String toString() {
+		return String.format("%.2f %s", value, unit);
 	}
 }
