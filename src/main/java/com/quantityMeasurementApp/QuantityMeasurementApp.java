@@ -1,3 +1,4 @@
+
 package com.quantityMeasurementApp;
 
 public class QuantityMeasurementApp {
@@ -45,13 +46,21 @@ public class QuantityMeasurementApp {
 
 		return result;
 	}
+	
+	public static <U extends IMeasurable> void demonstrateConversion(Quantity<U> quantity,U targetUnit) {
+
+	    Quantity<U> converted = quantity.convertTo(targetUnit);
+
+	    System.out.println("Original: " + quantity);
+	    System.out.println("Converted: " + converted);
+	}
 
 	public static void main(String[] args) {
 
 		demonstrateComparison(1.0, LengthUnit.FEET, 12.0, LengthUnit.INCHES);
 
 		demonstrateComparison(1.0, LengthUnit.YARDS, 3.0, LengthUnit.FEET);
-			//github.com/harsh-vardhan36
+
 		demonstrateComparison(1.0, LengthUnit.YARDS, 36.0, LengthUnit.INCHES);
 
 		demonstrateComparison(1.0, LengthUnit.CENTIMETERS, 0.393701, LengthUnit.INCHES);
@@ -85,5 +94,15 @@ public class QuantityMeasurementApp {
 
 		demonstrateAddition(new Quantity<>(1.0, WeightUnit.KILOGRAM), new Quantity<>(1000.0, WeightUnit.GRAM),
 				WeightUnit.GRAM);
+		
+		Quantity<VolumeUnit> v1 = new Quantity<>(1.0, VolumeUnit.LITRE);
+		Quantity<VolumeUnit> v2 = new Quantity<>(1000.0, VolumeUnit.MILLILITRE);
+		Quantity<VolumeUnit> v3 = new Quantity<>(1.0, VolumeUnit.GALLON);
+
+		demonstrateEquality(v1, v2);
+
+		demonstrateConversion(v1, VolumeUnit.MILLILITRE);
+
+		demonstrateAddition(v1, v2, VolumeUnit.LITRE);
 	}
 }
