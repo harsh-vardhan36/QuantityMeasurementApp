@@ -1,4 +1,3 @@
-
 package com.quantityMeasurementApp;
 
 import com.quantityMeasurementApp.controller.QuantityMeasurementController;
@@ -6,19 +5,29 @@ import com.quantityMeasurementApp.dto.QuantityDTO;
 import com.quantityMeasurementApp.model.QuantityMeasurementEntity;
 import com.quantityMeasurementApp.repository.IQuantityMeasurementRepository;
 import com.quantityMeasurementApp.repository.QuantityMeasurementCacheRepository;
+import com.quantityMeasurementApp.repository.QuantityMeasurementDatabaseRepository;
 import com.quantityMeasurementApp.service.IQuantityMeasurementService;
 import com.quantityMeasurementApp.service.QuantityMeasurementServiceImpl;
+import com.quantityMeasurementApp.unit.IMeasurable;
+import com.quantityMeasurementApp.unit.LengthUnit;
+import com.quantityMeasurementApp.unit.VolumeUnit;
+import com.quantityMeasurementApp.util.ApplicationConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class QuantityMeasurementApp {
+
+    private static final Logger logger = LoggerFactory.getLogger(QuantityMeasurementApp.class);
 
     private static QuantityMeasurementApp instance;
     private final QuantityMeasurementController controller;
     private final IQuantityMeasurementRepository repository;
 
     private QuantityMeasurementApp() {
-        this.repository = QuantityMeasurementCacheRepository.getInstance();
+        this.repository = createRepository();
         IQuantityMeasurementService service = new QuantityMeasurementServiceImpl(repository);
         this.controller = new QuantityMeasurementController(service);
+        logger.info("Application initialized with repository: {}", repository.getClass().getSimpleName());
     }
 
     public static QuantityMeasurementApp getInstance() {
@@ -45,6 +54,15 @@ public class QuantityMeasurementApp {
     }
 
     public static IQuantityMeasurementRepository createRepository() {
+        String repositoryType = ApplicationConfig.getInstance().getRepositoryType();
+        if ("database".equalsIgnoreCase(repositoryType)) {
+            try {
+                return new QuantityMeasurementDatabaseRepository();
+            } catch (Exception e) {
+                logger.warn("Database repository initialization failed, falling back to cache repository: {}", e.getMessage());
+                return QuantityMeasurementCacheRepository.getInstance();
+            }
+        }
         return QuantityMeasurementCacheRepository.getInstance();
     }
 
@@ -142,12 +160,25 @@ public class QuantityMeasurementApp {
     }
 
     private void displayStoredMeasurements() {
-        System.out.println("\n=== Stored Measurements ===");
+        logger.info("=== Stored Measurements ===");
         var measurements = repository.getAllMeasurements();
-        System.out.println("Total measurements stored: " + measurements.size());
+        logger.info("Total measurements stored: {}", measurements.size());
         for (QuantityMeasurementEntity entity : measurements) {
-            System.out.println("  " + entity);
+            logger.info("{}", entity);
         }
+        if (!repository.getPoolStatistics().isEmpty()) {
+            logger.info("Pool stats: {}", repository.getPoolStatistics());
+        }
+    }
+
+    public void deleteAllMeasurements() {
+        repository.deleteAllMeasurements();
+        logger.info("All measurements deleted");
+    }
+
+    public void closeResources() {
+        repository.releaseResources();
+        logger.info("Repository resources released");
     }
 
     public static <U extends IMeasurable> boolean demonstrateEquality(Quantity<U> q1, Quantity<U> q2) {
@@ -225,5 +256,8 @@ public class QuantityMeasurementApp {
         Quantity<VolumeUnit> v2 = new Quantity<>(500.0, VolumeUnit.MILLILITRE);
         demonstrateSubtraction(v1, v2);
         demonstrateDivision(v1, v2);
+
+        app.displayStoredMeasurements();
+        app.closeResources();
     }
 }
