@@ -16,9 +16,15 @@ CREATE TABLE IF NOT EXISTS quantity_measurement_entity (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_qm_operation ON quantity_measurement_entity(operation);
-CREATE INDEX IF NOT EXISTS idx_qm_measurement_type ON quantity_measurement_entity(this_measurement_type);
-CREATE INDEX IF NOT EXISTS idx_qm_created_at ON quantity_measurement_entity(created_at);
+CREATE INDEX idx_qm_operation 
+ON quantity_measurement_entity(operation);
+
+CREATE INDEX idx_qm_measurement_type 
+ON quantity_measurement_entity(this_measurement_type);
+
+CREATE INDEX idx_qm_created_at 
+ON quantity_measurement_entity(created_at);
+
 
 CREATE TABLE IF NOT EXISTS quantity_measurement_history (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,

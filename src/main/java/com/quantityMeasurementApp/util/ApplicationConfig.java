@@ -60,6 +60,9 @@ public final class ApplicationConfig {
         if (dbUrl.startsWith("jdbc:postgresql:")) {
             return "org.postgresql.Driver";
         }
+        if (dbUrl.startsWith("jdbc:mysql:")) {
+            return "com.mysql.cj.jdbc.Driver";
+        }
 
         return configured != null && !configured.isBlank() ? configured : "org.h2.Driver";
     }
