@@ -1,4 +1,3 @@
-
 package com.quantityMeasurementApp;
 
 public enum WeightUnit implements IMeasurable {
@@ -33,5 +32,10 @@ public enum WeightUnit implements IMeasurable {
     @Override
     public String getUnitName() {
         return this.name();
+    }
+
+    @Override
+    public String getMeasurementType() {
+        return this.getClass().getSimpleName();
     }
 }
