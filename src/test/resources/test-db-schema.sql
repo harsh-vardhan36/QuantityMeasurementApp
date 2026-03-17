@@ -1,5 +1,5 @@
-DROP TABLE IF EXISTS quantity_measurement_history;
-DROP TABLE IF EXISTS quantity_measurement_entity;
+
+
 
 CREATE TABLE quantity_measurement_entity (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,

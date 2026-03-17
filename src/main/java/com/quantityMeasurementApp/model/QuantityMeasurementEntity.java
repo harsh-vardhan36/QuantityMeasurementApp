@@ -1,10 +1,11 @@
+
 package com.quantityMeasurementApp.model;
+
+import com.quantityMeasurementApp.unit.IMeasurable;
+import com.quantityMeasurementApp.unit.LengthUnit;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-
-import com.quantityMeasurementApp.unit.LengthUnit;
-import com.quantityMeasurementApp.unit.IMeasurable;
 
 public class QuantityMeasurementEntity implements Serializable {
 

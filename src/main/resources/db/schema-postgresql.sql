@@ -1,3 +1,4 @@
+
 CREATE TABLE IF NOT EXISTS quantity_measurement_entity (
     id BIGSERIAL PRIMARY KEY,
     this_value DOUBLE PRECISION NOT NULL,

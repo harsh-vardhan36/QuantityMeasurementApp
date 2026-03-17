@@ -1,3 +1,4 @@
+
 package com.quantityMeasurementApp.repository;
 
 import com.quantityMeasurementApp.unit.LengthUnit;
@@ -12,10 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -32,14 +30,27 @@ class QuantityMeasurementDatabaseRepositoryTest {
     @BeforeEach
     void setUp() {
         System.setProperty("db.url", "jdbc:h2:mem:qm_repo_test;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false");
+        System.setProperty("db.driverClassName", "org.h2.Driver");
+        System.setProperty("db.username", "sa");
+        System.setProperty("db.password", "");
+        ApplicationConfig.reset();
+
         repository = new QuantityMeasurementDatabaseRepository();
         repository.deleteAllMeasurements();
     }
 
     @AfterEach
     void tearDown() {
-        repository.releaseResources();
+        if (repository != null) {
+            repository.releaseResources();
+            repository = null;
+        }
+
         System.clearProperty("db.url");
+        System.clearProperty("db.driverClassName");
+        System.clearProperty("db.username");
+        System.clearProperty("db.password");
+        ApplicationConfig.reset();
     }
 
     @Test
@@ -100,10 +111,10 @@ class QuantityMeasurementDatabaseRepositoryTest {
                 new QuantityModel<>(2.0, LengthUnit.FEET)
         ));
 
-        assertEquals(1, repository.getMeasurementsByType("LengthUnit").size());
-        assertEquals(1, repository.getTotalCount());
-        repository.deleteAll();
-        assertEquals(0, repository.getTotalCount());
+        assertEquals(1, repository.getMeasurementsByMeasurementType("LengthUnit").size());
+        assertEquals(1, repository.getMeasurementCount());
+        repository.deleteAllMeasurements();
+        assertEquals(0, repository.getMeasurementCount());
     }
 
     @Test
@@ -129,7 +140,7 @@ class QuantityMeasurementDatabaseRepositoryTest {
 
         List<QuantityMeasurementEntity> matches = repository.getMeasurementsByOperation(injectedValue);
         assertEquals(1, matches.size());
-        assertEquals(injectedValue, matches.getFirst().getOperation());
+        assertEquals(injectedValue, matches.get(0).getOperation());
     }
 
     @Test
@@ -169,7 +180,7 @@ class QuantityMeasurementDatabaseRepositoryTest {
                 "Equal"
         ));
 
-        QuantityMeasurementEntity stored = repository.getAllMeasurements().getFirst();
+        QuantityMeasurementEntity stored = repository.getAllMeasurements().get(0);
         assertNotNull(stored.getCreatedAt());
     }
 
@@ -219,26 +230,49 @@ class QuantityMeasurementDatabaseRepositoryTest {
     }
 
     @Test
-    void testDataPersistence_AcrossRepositoryRestart() throws IOException {
-        repository.releaseResources();
-        System.clearProperty("db.url");
+    void testDataPersistence_AcrossRepositoryRestart() throws Exception {
+        if (repository != null) {
+            repository.releaseResources();
+            repository = null;
+        }
 
-        String dbPath = Path.of("target", "qm_repo_persist_test").toAbsolutePath().toString().replace("\\", "/");
-        String fileUrl = "jdbc:h2:file:" + dbPath + ";MODE=MySQL;AUTO_SERVER=TRUE;DATABASE_TO_UPPER=false";
+        System.clearProperty("db.url");
+        System.clearProperty("db.driverClassName");
+        System.clearProperty("db.username");
+        System.clearProperty("db.password");
+
+        String uniqueDbName = "qm_repo_persist_test_" + System.nanoTime();
+        String dbPath = Path.of("target", uniqueDbName).toAbsolutePath().toString().replace("\\", "/");
+
+        String fileUrl = "jdbc:h2:file:" + dbPath
+                + ";MODE=MySQL;DATABASE_TO_UPPER=false;DB_CLOSE_ON_EXIT=FALSE";
+
         System.setProperty("db.url", fileUrl);
+        System.setProperty("db.driverClassName", "org.h2.Driver");
+        System.setProperty("db.username", "sa");
+        System.setProperty("db.password", "");
+        ApplicationConfig.reset();
 
         QuantityMeasurementDatabaseRepository repository1 = new QuantityMeasurementDatabaseRepository();
         repository1.deleteAllMeasurements();
+
         repository1.save(new QuantityMeasurementEntity(
                 new QuantityModel<>(1.0, LengthUnit.FEET),
                 new QuantityModel<>(12.0, LengthUnit.INCHES),
                 "COMPARE",
                 "Equal"
         ));
+
+        assertEquals(1, repository1.getMeasurementCount());
         repository1.releaseResources();
 
+        ApplicationConfig.reset();
+
         QuantityMeasurementDatabaseRepository repository2 = new QuantityMeasurementDatabaseRepository();
+        System.out.println(repository2.getMeasurementCount());
         assertEquals(1, repository2.getMeasurementCount());
+        assertEquals(1, repository2.getAllMeasurements().size());
+
         repository2.deleteAllMeasurements();
         repository2.releaseResources();
 
@@ -255,9 +289,11 @@ class QuantityMeasurementDatabaseRepositoryTest {
         ));
 
         String url = System.getProperty("db.url");
+        ApplicationConfig.reset();
         ApplicationConfig config = ApplicationConfig.getInstance();
-        try (Connection connection = DriverManager.getConnection(url, config.getDbUsername(), config.getDbPassword());
-             Statement statement = connection.createStatement()) {
+
+        try (var connection = java.sql.DriverManager.getConnection(url, config.getDbUsername(), config.getDbPassword());
+             var statement = connection.createStatement()) {
             var tables = new ArrayList<String>();
             try (var rs = statement.executeQuery("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='PUBLIC'")) {
                 while (rs.next()) {

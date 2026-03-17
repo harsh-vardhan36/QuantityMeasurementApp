@@ -1,3 +1,4 @@
+
 package com.quantityMeasurementApp.exception;
 
 public class DatabaseException extends QuantityMeasurementException {
