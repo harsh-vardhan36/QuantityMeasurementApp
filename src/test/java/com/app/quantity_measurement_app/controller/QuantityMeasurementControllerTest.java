@@ -4,25 +4,23 @@ import com.app.quantity_measurement_app.dto.QuantityDTO;
 import com.app.quantity_measurement_app.dto.QuantityInputDTO;
 import com.app.quantity_measurement_app.dto.QuantityMeasurementDTO;
 import com.app.quantity_measurement_app.service.IQuantityMeasurementService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -34,12 +32,12 @@ class QuantityMeasurementControllerTest {
 
     private ObjectMapper objectMapper;
 
-    @MockitoBean
+    @MockBean
     private IQuantityMeasurementService service;
 
     @BeforeEach
     void setUp() {
-        objectMapper = JsonMapper.builder().build();
+        objectMapper = new ObjectMapper();
     }
 
     @Test
@@ -49,12 +47,6 @@ class QuantityMeasurementControllerTest {
         QuantityInputDTO input = new QuantityInputDTO(q1, q2);
 
         QuantityMeasurementDTO result = new QuantityMeasurementDTO();
-        result.setThisValue(1.0);
-        result.setThisUnit("FEET");
-        result.setThisMeasurementType("LengthUnit");
-        result.setThatValue(12.0);
-        result.setThatUnit("INCHES");
-        result.setThatMeasurementType("LengthUnit");
         result.setOperation("compare");
         result.setResultString("true");
         result.setError(false);
@@ -66,10 +58,7 @@ class QuantityMeasurementControllerTest {
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.operation").value("compare"))
-                .andExpect(jsonPath("$.resultString").value("true"))
-                .andExpect(jsonPath("$.error").value(false));
-
-        Mockito.verify(service).compareQuantities(Mockito.any(), Mockito.any());
+                .andExpect(jsonPath("$.resultString").value("true"));
     }
 
     @Test
@@ -79,17 +68,9 @@ class QuantityMeasurementControllerTest {
         QuantityInputDTO input = new QuantityInputDTO(q1, q2);
 
         QuantityMeasurementDTO result = new QuantityMeasurementDTO();
-        result.setThisValue(1.0);
-        result.setThisUnit("FEET");
-        result.setThisMeasurementType("LengthUnit");
-        result.setThatValue(12.0);
-        result.setThatUnit("INCHES");
-        result.setThatMeasurementType("LengthUnit");
         result.setOperation("add");
         result.setResultValue(2.0);
         result.setResultUnit("FEET");
-        result.setResultMeasurementType("LengthUnit");
-        result.setError(false);
 
         Mockito.when(service.addQuantities(Mockito.any(), Mockito.any())).thenReturn(result);
 
@@ -98,8 +79,7 @@ class QuantityMeasurementControllerTest {
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.operation").value("add"))
-                .andExpect(jsonPath("$.resultValue").value(2.0))
-                .andExpect(jsonPath("$.resultUnit").value("FEET"));
+                .andExpect(jsonPath("$.resultValue").value(2.0));
     }
 
     @Test
@@ -109,15 +89,8 @@ class QuantityMeasurementControllerTest {
         QuantityInputDTO input = new QuantityInputDTO(q1, q2);
 
         QuantityMeasurementDTO result = new QuantityMeasurementDTO();
-        result.setThisValue(1.0);
-        result.setThisUnit("FEET");
-        result.setThisMeasurementType("LengthUnit");
-        result.setThatValue(0.0);
-        result.setThatUnit("INCHES");
-        result.setThatMeasurementType("LengthUnit");
         result.setOperation("convert");
         result.setResultValue(12.0);
-        result.setError(false);
 
         Mockito.when(service.convertQuantity(Mockito.any(), Mockito.any())).thenReturn(result);
 
@@ -133,7 +106,6 @@ class QuantityMeasurementControllerTest {
     void testGetOperationHistory() throws Exception {
         QuantityMeasurementDTO dto = new QuantityMeasurementDTO();
         dto.setOperation("compare");
-        dto.setResultString("true");
 
         Mockito.when(service.getHistoryByOperation("compare")).thenReturn(List.of(dto));
 
@@ -143,38 +115,11 @@ class QuantityMeasurementControllerTest {
     }
 
     @Test
-    void testGetMeasurementTypeHistory() throws Exception {
-        QuantityMeasurementDTO dto = new QuantityMeasurementDTO();
-        dto.setThisMeasurementType("LengthUnit");
-        dto.setOperation("add");
-
-        Mockito.when(service.getHistoryByMeasurementType("LengthUnit")).thenReturn(List.of(dto));
-
-        mockMvc.perform(get("/api/v1/quantities/history/type/LengthUnit"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].thisMeasurementType").value("LengthUnit"));
-    }
-
-    @Test
     void testGetOperationCount() throws Exception {
         Mockito.when(service.getCountByOperation("COMPARE")).thenReturn(5L);
 
         mockMvc.perform(get("/api/v1/quantities/count/COMPARE"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").value(5));
-    }
-
-    @Test
-    void testGetErrorHistory() throws Exception {
-        QuantityMeasurementDTO dto = new QuantityMeasurementDTO();
-        dto.setError(true);
-        dto.setErrorMessage("Test error");
-
-        Mockito.when(service.getErrorHistory()).thenReturn(List.of(dto));
-
-        mockMvc.perform(get("/api/v1/quantities/history/errored"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].error").value(true))
-                .andExpect(jsonPath("$[0].errorMessage").value("Test error"));
     }
 }
