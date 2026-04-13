@@ -15,16 +15,13 @@ public class CorsConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allow Angular dev server
-        config.setAllowedOrigins(List.of("http://localhost:4200"));
+        config.setAllowedOrigins(List.of(
+            "http://localhost:4200",
+            "https://quantity-measurement-app-frontend-6-three.vercel.app"
+        ));
 
-        // Allow all standard HTTP methods
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
-        // Allow Authorization header (needed for JWT Bearer token)
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
-
-        // Allow cookies/credentials if needed
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
