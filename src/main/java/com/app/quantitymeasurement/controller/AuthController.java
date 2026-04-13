@@ -1,5 +1,7 @@
 package com.app.quantitymeasurement.controller;
  
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
  
@@ -29,9 +31,11 @@ public class AuthController {
  
     @PostMapping("/register")
     @Operation(summary = "Register a new user account")
-    public ResponseEntity<String> register(@Valid @RequestBody SignUpRequest req) {
+    public ResponseEntity<Map<String, String>> register(@Valid @RequestBody SignUpRequest req) {
         authService.register(req);
-        return ResponseEntity.ok("User registered successfully!");
+        return ResponseEntity.ok(Map.of(
+        	    "message", "User registered successfully!"
+        	));
     }
  
     @PostMapping("/forgotPassword/{email}")

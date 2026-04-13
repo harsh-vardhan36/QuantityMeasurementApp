@@ -72,6 +72,7 @@ public class AuthServiceImpl implements AuthService {
 
         String jwt = tokenProvider.generateToken(authentication);
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        refreshTokenService.deleteByUserId(userPrincipal.getId()); 
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
 
         // Optional: send login notification email

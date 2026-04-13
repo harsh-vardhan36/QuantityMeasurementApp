@@ -56,7 +56,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private OAuth2User processOAuth2User(OAuth2UserRequest oAuth2UserRequest, OAuth2User oAuth2User) {
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
-        String email = (String) attributes.get("email");
+        //  normalize email
+        String email = ((String) attributes.get("email")).toLowerCase();
         if (!StringUtils.hasText(email)) {
             throw new IllegalArgumentException("Email not found from OAuth2 provider");
         }
@@ -66,10 +67,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         if (userOptional.isPresent()) {
             user = userOptional.get();
-            // Update existing user's profile details on each login
+
+            //  link Google account with existing user
+            user.setProvider(AuthProvider.google);
+            user.setProviderId((String) attributes.get("sub"));
+
             user = updateExistingUser(user, attributes);
         } else {
-            // Register the new user
             user = registerNewUser(oAuth2UserRequest, attributes, email);
         }
 
