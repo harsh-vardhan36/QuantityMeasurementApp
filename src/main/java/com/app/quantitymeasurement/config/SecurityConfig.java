@@ -1,7 +1,7 @@
 package com.app.quantitymeasurement.config;
- 
-import java.util.Arrays;
- 
+
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,26 +17,26 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
- 
+
 import com.app.quantitymeasurement.security.CustomOAuth2UserService;
 import com.app.quantitymeasurement.security.JwtAuthenticationFilter;
 import com.app.quantitymeasurement.security.OAuth2AuthenticationSuccessHandler;
- 
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
- 
+
     @Autowired
     private CustomOAuth2UserService customOAuth2UserService;
- 
+
     @Autowired
     private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
- 
+
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter();
     }
- 
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -48,8 +48,6 @@ public class SecurityConfig {
             .headers(headers ->
                 headers.frameOptions(frame -> frame.disable())
             )
-            // KEY FIX: never redirect to Spring's built-in /login page.
-            // Return 401 so Angular (not Spring) handles all navigation.
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
             )
@@ -64,7 +62,7 @@ public class SecurityConfig {
                     "/login/oauth2/**",
                     "/api/auth/**",
                     "/api/measurements/**",
-                    "/api/user/quantities/**"  // guests can calculate; history saved only if logged in
+                    "/api/user/quantities/**"
                 ).permitAll()
                 .requestMatchers("/api/user/me").authenticated()
                 .anyRequest().authenticated()
@@ -81,81 +79,40 @@ public class SecurityConfig {
                 )
                 .successHandler(oAuth2AuthenticationSuccessHandler)
             );
- 
+
         http.addFilterBefore(jwtAuthenticationFilter(),
                 UsernamePasswordAuthenticationFilter.class);
- 
+
         return http.build();
     }
- 
+
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
- 
+
     @Bean
     public org.springframework.security.crypto.password.PasswordEncoder passwordEncoder() {
         return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
     }
- 
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList(
+
+        config.setAllowedOriginPatterns(List.of(
             "http://localhost:4200",
-            "http://localhost:8080"
+            "https://*.vercel.app"
         ));
-        config.setAllowedMethods(Arrays.asList(
-            "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
-        ));
-        config.setAllowedHeaders(Arrays.asList(
-            "Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"
-        ));
+
+        config.setAllowedMethods(List.of("*"));
+        config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
- 
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
+
         return source;
     }
 }
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
