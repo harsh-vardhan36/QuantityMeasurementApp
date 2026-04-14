@@ -17,7 +17,7 @@ public class CorsConfig {
 
         config.setAllowedOrigins(List.of(
             "http://localhost:4200",
-            "https://quantity-measurement-app-frontend-6-three.vercel.app"
+            "https://quantity-measurement-app-frontend-6-three.vercel.app" 
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
