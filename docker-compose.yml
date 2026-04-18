@@ -1,0 +1,137 @@
+services:
+  eureka-server:
+    build: ./eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      - TZ=Asia/Kolkata
+      - SERVER_PORT=8761
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - quantity-network
+
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    ports:
+      - "8083:8083"
+    environment:
+      - TZ=Asia/Kolkata
+      - SERVER_PORT=8083
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - DB_URL=${AUTH_DB_URL}
+      - DB_USERNAME=${AUTH_DB_USERNAME}
+      - DB_PASSWORD=${AUTH_DB_PASSWORD}
+      - REDIS_URL=${REDIS_URL}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - APP_OAUTH2_REDIRECT_URI=${APP_OAUTH2_REDIRECT_URI}
+      - APP_OAUTH2_GOOGLE_REDIRECT_URI=${APP_OAUTH2_GOOGLE_REDIRECT_URI}
+      - MAIL_HOST=smtp.gmail.com
+      - MAIL_PORT=587
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - APP_AUTH_TOKEN_SECRET=${APP_AUTH_TOKEN_SECRET}
+      - APP_AUTH_TOKEN_EXPIRATION_MSEC=${APP_AUTH_TOKEN_EXPIRATION_MSEC}
+      - APP_AUTH_REFRESH_TOKEN_EXPIRATION_MSEC=${APP_AUTH_REFRESH_TOKEN_EXPIRATION_MSEC}
+      - ADMIN_SERVER_URL=http://admin-server:9090
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - quantity-network
+
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    ports:
+      - "8082:8082"
+    environment:
+      - TZ=Asia/Kolkata
+      - SERVER_PORT=8082
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - DB_URL=${USER_DB_URL}
+      - DB_USERNAME=${USER_DB_USERNAME}
+      - DB_PASSWORD=${USER_DB_PASSWORD}
+      - APP_AUTH_TOKEN_SECRET=${APP_AUTH_TOKEN_SECRET}
+      - ADMIN_SERVER_URL=http://admin-server:9090
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - quantity-network
+
+  measurement-service:
+    build: ./measurement-service
+    container_name: measurement-service
+    ports:
+      - "8081:8081"
+    environment:
+      - TZ=Asia/Kolkata
+      - SERVER_PORT=8081
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - DB_URL=${MEASUREMENT_DB_URL}
+      - DB_USERNAME=${MEASUREMENT_DB_USERNAME}
+      - DB_PASSWORD=${MEASUREMENT_DB_PASSWORD}
+      - SPRING_DATA_REDIS_HOST=redis-18937.crce292.ap-south-1-2.ec2.cloud.redislabs.com
+      - SPRING_DATA_REDIS_PORT=18937
+      - APP_AUTH_TOKEN_SECRET=${APP_AUTH_TOKEN_SECRET}
+      - APP_AUTH_TOKEN_EXPIRATION_MSEC=${APP_AUTH_TOKEN_EXPIRATION_MSEC}
+      - APP_AUTH_REFRESH_TOKEN_EXPIRATION_MSEC=${APP_AUTH_REFRESH_TOKEN_EXPIRATION_MSEC}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - APP_OAUTH2_REDIRECT_URI=${APP_OAUTH2_REDIRECT_URI}
+      - APP_OAUTH2_GOOGLE_REDIRECT_URI=${APP_OAUTH2_GOOGLE_REDIRECT_URI}
+      - ADMIN_SERVER_URL=http://admin-server:9090
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - quantity-network
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - TZ=Asia/Kolkata
+      - SERVER_PORT=8080
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - quantity-network
+
+  admin-server:
+    build: ./admin-server
+    container_name: admin-server
+    ports:
+      - "9090:9090"
+    environment:
+      - TZ=Asia/Kolkata
+      - SERVER_PORT=9090
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - quantity-network
+
+networks:
+  quantity-network:
+    driver: bridge
